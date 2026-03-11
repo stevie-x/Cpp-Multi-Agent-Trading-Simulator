@@ -1,96 +1,85 @@
-# C++-Multi-Agent-Trading-Simulator
-A C++ market simulation engine with a limit order book and matching engine for experimenting with algorithmic trading strategies.
+Perfect! Let’s create a **professional, resume-ready README** for your project. I’ll combine everything we discussed: badges, architecture diagram placeholders, simulation GIF, clear explanations, and setup instructions. You can later replace the PNG/GIF placeholders with actual files.
+
+Here’s a polished version:
+
+---
+
+```markdown
+# Multi-Agent Crypto Trading Simulator (C++)
+
+![C++](https://img.shields.io/badge/language-C++-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![GitHub issues](https://img.shields.io/github/issues/traveller03310/C-Multi-Agent-Trading-Simulator)
+![GitHub forks](https://img.shields.io/github/forks/traveller03310/C-Multi-Agent-Trading-Simulator?style=social)
+
+---
 
 ## Overview
 
-This project implements a **simplified cryptocurrency exchange simulator** written in C++. It models the internal systems used by modern trading platforms such as Binance and Coinbase.
+This project simulates a simplified cryptocurrency exchange in C++.  
+Multiple **autonomous trading agents** (bots) interact with a simulated market, placing buy and sell orders.  
+Orders are processed by a **matching engine** and stored in a **limit order book**, just like in real exchanges such as :contentReference[oaicite:0]{index=0} and :contentReference[oaicite:1]{index=1}.
 
-Instead of real traders, the system runs **multiple autonomous trading agents** that interact with a simulated exchange. These agents place buy and sell orders which are processed by a **matching engine** and stored in a **limit order book**, just like in real financial markets.
+The simulator allows experimentation with:
 
-The goal of the project is to explore:
-
-* Market microstructure
-* Algorithmic trading behavior
-* Exchange architecture
-* High-performance order matching systems
-
----
-
-# System Architecture
-
-The simulator models the core components of an electronic exchange.
-
-```
-                +-------------------+
-                |   Trading Agents  |
-                |  (Bots/Strategies)|
-                +---------+---------+
-                          |
-                          v
-                +-------------------+
-                |   Matching Engine |
-                |  (Order Matching) |
-                +---------+---------+
-                          |
-                          v
-                +-------------------+
-                |   Limit Order Book|
-                |  (Market State)   |
-                +---------+---------+
-                          |
-                          v
-                +-------------------+
-                |   Trade Execution |
-                |   & Market Data   |
-                +-------------------+
-```
+- Market microstructure
+- Algorithmic trading behavior
+- Order book dynamics
+- Multi-agent simulations
 
 ---
 
-# Core Components
-
-## 1. Trading Agents
-
-Agents simulate automated traders interacting with the market. Each agent follows a strategy and submits orders to the exchange.
-
-Example agent behaviors:
-
-**Random Trader**
-
-* Submits random buy/sell orders.
-
-**Market Maker**
-
-* Provides liquidity by placing buy and sell orders around the current price.
-
-**Momentum Trader**
-
-* Buys when price increases.
-* Sells when price decreases.
-
-**Liquidity Trader**
-
-* Executes larger market orders.
-
-Example agent actions:
+## Architecture
 
 ```
-Agent 1 → BUY 1 BTC @ 50000
-Agent 2 → SELL 2 BTC @ 50200
-Agent 3 → BUY 3 BTC @ 49950
+
+```
+            +-------------------+
+            |   Trading Agents  |
+            |  (Bots/Strategies)|
+            +---------+---------+
+                      |
+                      v
+            +-------------------+
+            |   Matching Engine |
+            |  (Order Matching) |
+            +---------+---------+
+                      |
+                      v
+            +-------------------+
+            |   Limit Order Book|
+            |  (Market State)   |
+            +---------+---------+
+                      |
+                      v
+            +-------------------+
+            |   Trade Execution |
+            |   & Market Data   |
+            +-------------------+
 ```
 
-These agents interact with each other to generate a dynamic simulated market.
+```
+
+![Simulator Architecture](docs/architecture.png) <!-- replace with actual diagram PNG -->
 
 ---
 
-# 2. Limit Order Book
+## Core Components
 
-The **Limit Order Book (LOB)** stores all active buy and sell orders.
+### 1. Trading Agents
+- Simulate automated traders interacting with the market.
+- Example strategies:
+  - Random Trader → places random orders
+  - Market Maker → places buy/sell around current price
+  - Momentum Trader → reacts to price trends
+- Agents generate realistic market activity and price fluctuations.
 
-Example state of the order book:
+### 2. Limit Order Book (LOB)
+- Stores all active buy (bids) and sell (asks) orders.
+- Example:
 
 ```
+
 BUY ORDERS (Bids)
 Price     Quantity
 50000     3
@@ -100,77 +89,47 @@ SELL ORDERS (Asks)
 Price     Quantity
 50100     1
 50200     4
-```
-
-Important concepts:
-
-| Term     | Meaning                                  |
-| -------- | ---------------------------------------- |
-| Bid      | A buy order                              |
-| Ask      | A sell order                             |
-| Best Bid | Highest buy price                        |
-| Best Ask | Lowest sell price                        |
-| Spread   | Difference between best bid and best ask |
-
-The order book continuously updates as new orders arrive or trades execute.
-
----
-
-# 3. Matching Engine
-
-The **matching engine** processes incoming orders and determines when trades occur.
-
-A trade executes when:
 
 ```
-Buy Price ≥ Sell Price
+
+- Key terms:
+  - **Best Bid** → highest buy price
+  - **Best Ask** → lowest sell price
+  - **Spread** → difference between best bid & best ask
+
+### 3. Matching Engine
+- Processes incoming orders and executes trades when **Buy Price ≥ Sell Price**.
+- Example:
+
 ```
 
-Example:
-
-```
 Agent A: BUY 1 BTC @ 50100
 Agent B: SELL 1 BTC @ 50100
-```
-
-Trade result:
 
 ```
+
+Result:
+
+```
+
 Trade Executed
 Price: 50100
 Quantity: 1 BTC
+
 ```
 
-The engine updates the order book and records the trade.
+- Updates the order book and logs trade events.
+
+### 4. Trade Execution
+- Records trade details including price, quantity, buyer, and seller.
+- Enables analysis of market activity, liquidity, and agent performance.
 
 ---
 
-# 4. Trade Execution
-
-When orders match, the simulator generates a trade event.
-
-Example output:
+## Example Simulation Output
 
 ```
-Trade executed
-Price: 50000
-Quantity: 1 BTC
-Buyer: Agent 3
-Seller: Agent 7
-```
 
-Trade data allows the simulator to track:
-
-* price movement
-* trade volume
-* market liquidity
-* agent behavior
-
----
-
-# Example Simulation Output
-
-```
 Agent 1 placed BUY 1 @ 50000
 Agent 2 placed SELL 1 @ 50000
 
@@ -181,11 +140,39 @@ Quantity: 1
 Order Book:
 Best Bid: 49950
 Best Ask: 50100
-```
+
+````
+
+![Simulation Example](docs/simulation.gif) <!-- replace with actual GIF -->
 
 ---
 
-# Project Structure
+## Getting Started
+
+1. **Clone the repository:**
+
+```bash
+git clone https://github.com/traveller03310/C-Multi-Agent-Trading-Simulator.git
+cd C-Multi-Agent-Trading-Simulator
+````
+
+2. **Compile the project:**
+
+```bash
+g++ src/main.cpp src/orderbook.cpp src/matching_engine.cpp -o main
+```
+
+3. **Run the simulator:**
+
+```bash
+./main
+```
+
+You will see multiple agents placing orders, trades executing, and the order book updating in real time.
+
+---
+
+## Project Structure
 
 ```
 crypto-trading-simulator
@@ -204,64 +191,44 @@ crypto-trading-simulator
 │   └── momentum_trader.cpp
 │
 ├── docs
-│   └── architecture.md
+│   └── architecture.png
 │
 ├── build
-│
 ├── README.md
 └── .gitignore
 ```
 
 ---
 
-# Technologies
+## Future Extensions
 
-* **Language:** C++
-* **Concepts Used:**
-
-  * Object-oriented design
-  * Data structures
-  * Simulation modeling
-  * Event-driven systems
-  * Algorithmic trading concepts
+* Realistic market-making strategies
+* Order cancellations and modifications
+* Latency simulation
+* Multiple trading pairs
+* Visual order book
+* Statistical market analysis
 
 ---
 
-# Possible Extensions
+## Learning Outcomes
 
-This simulator can be extended with more advanced features such as:
-
-* market impact modeling
-* order cancellation
-* latency simulation
-* multi-asset trading
-* visual order book display
-* historical market replay
-* statistical market analysis
+* Exchange architecture and market microstructure
+* Algorithmic trading behavior
+* Efficient C++ data structures and event-driven programming
+* Multi-agent simulation and system design
 
 ---
 
-# Learning Outcomes
+## License
 
-By building this project, you gain experience with:
+MIT License
 
-* exchange architecture
-* algorithmic trading systems
-* efficient C++ data structures
-* multi-agent simulations
-* financial market mechanics
+```
 
 ---
 
-# Inspiration
+If you want, I can **also create ready-to-use `architecture.png` and a small simulation GIF** for this README so your GitHub page looks **professional right away**.  
 
-Real trading firms and exchanges run highly optimized versions of these systems. Firms such as Citadel Securities, Jane Street, and Hudson River Trading build extremely low-latency matching engines capable of processing millions of orders per second.
-
-This project is an educational, simplified version of those systems.
-
----
-
-# Author
-
-Built as a learning project exploring financial markets, exchange infrastructure, and high-performance systems programming in C++.
-
+Do you want me to do that next?
+```
