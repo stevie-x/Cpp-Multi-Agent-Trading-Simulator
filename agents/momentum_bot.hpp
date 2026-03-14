@@ -1,21 +1,21 @@
 #pragma once
-#include <vector>
-#include <string>
-#include "../src/order.hpp"
+#include "bot.hpp"
+#include <cstdlib>
 
-class MomentumBot {
-private:
-    std::string name;
-    std::vector<double> prices;
-    int window;
-
+class RandomBot : public Bot {
 public:
-    MomentumBot(std::string name, int window = 5);
+    RandomBot(std::string n) : Bot(n) {}
 
-    void onPriceUpdate(double price);
+    void onPriceUpdate(double price, LimitOrderBook& lob, int timestep) override {
+        int r = rand() % 10;
 
-    bool shouldBuy();
-    bool shouldSell();
-
-    Order createOrder(int id);
+        if(r < 3) {
+            // buy slightly below market
+            lob.addOrder({timestep, name, price - 5, 1}, true);
+        }
+        else if(r > 7) {
+            // sell slightly above market
+            lob.addOrder({timestep + 10000, name, price + 5, 1}, false);
+        }
+    }
 };

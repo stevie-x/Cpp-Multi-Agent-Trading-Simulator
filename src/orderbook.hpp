@@ -3,13 +3,7 @@
 #include <queue>
 #include <string>
 #include <iostream>
-
-struct Order {
-    int id;
-    std::string agent;
-    double price;
-    int quantity;
-};
+#include "order.hpp"   // ← use shared Order definition
 
 class LimitOrderBook {
 public:

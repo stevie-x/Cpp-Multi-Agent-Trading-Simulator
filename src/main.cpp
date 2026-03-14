@@ -2,8 +2,7 @@
 #include "orderbook.hpp"
 #include "matching_engine.hpp"
 #include "market_data.hpp"
-#include "random_bot.hpp"
-#include "../agents/random_bot.hpp"
+#include "../agents/random_bot.hpp"   // ← only once, with correct path
 
 int main() {
 
@@ -26,12 +25,10 @@ int main() {
         std::cout << "\n=== Timestep " << timestep << " ===\n";
         std::cout << "Price: " << tick.price << "\n";
 
-        // Bots react to price
         bot1.onPriceUpdate(tick.price, lob, timestep);
         bot2.onPriceUpdate(tick.price, lob, timestep);
         bot3.onPriceUpdate(tick.price, lob, timestep);
 
-        // Match orders
         matchOrders(lob);
 
         if(timestep > 100) break;
