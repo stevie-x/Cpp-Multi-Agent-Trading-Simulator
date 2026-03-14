@@ -1,4 +1,4 @@
-# 📈 C++ Multi-Agent Trading Simulator
+#  C++ Multi-Agent Trading Simulator
 
 A high-performance, event-driven trading simulator written in C++ that models multiple autonomous trading agents competing in a real-time limit order book using historical cryptocurrency market data.
 
