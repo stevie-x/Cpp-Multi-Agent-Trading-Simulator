@@ -1,5 +1,5 @@
 #pragma once
 #include "orderbook.hpp"
-#include <fstream>
+#include <string>
 
-void matchOrders(LimitOrderBook &lob, std::ofstream &logFile, int timestep);
+void matchOrders(LimitOrderBook &lob, std::string &tradeBuffer, int timestep);

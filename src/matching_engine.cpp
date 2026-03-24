@@ -1,30 +1,29 @@
 #include "matching_engine.hpp"
-#include <fstream>
 #include <algorithm>
 
-void matchOrders(LimitOrderBook &lob, std::ofstream &logFile, int timestep) {
+void matchOrders(LimitOrderBook &lob, std::string &tradeBuffer, int timestep) {
     while(!lob.bids.empty() && !lob.asks.empty()) {
-        auto bestBidIt  = lob.bids.begin();
-        auto bestAskIt  = lob.asks.begin();
+        auto bestBidIt = lob.bids.begin();
+        auto bestAskIt = lob.asks.begin();
 
         if(bestBidIt->first >= bestAskIt->first) {
             Order &buyOrder  = bestBidIt->second.front();
             Order &sellOrder = bestAskIt->second.front();
 
-            int    executedQty  = std::min(buyOrder.quantity, sellOrder.quantity);
-            double tradePrice   = sellOrder.price;
+            int    executedQty = std::min(buyOrder.quantity, sellOrder.quantity);
+            double tradePrice  = sellOrder.price;
 
             std::cout << "Trade executed: " << executedQty
                       << " ETH at " << tradePrice
                       << " between " << buyOrder.agent
-                      << " and " << sellOrder.agent << "\n";
+                      << " and " << sellOrder.agent << '\n';
 
-            // Log to CSV: timestep, buyer, seller, price, quantity
-            logFile << timestep << ","
-                    << buyOrder.agent  << ","
-                    << sellOrder.agent << ","
-                    << tradePrice      << ","
-                    << executedQty     << "\n";
+            // Fix #3: append to buffer instead of writing to file directly
+            tradeBuffer += std::to_string(timestep)    + ','
+                         + buyOrder.agent              + ','
+                         + sellOrder.agent             + ','
+                         + std::to_string(tradePrice)  + ','
+                         + std::to_string(executedQty) + '\n';
 
             buyOrder.quantity  -= executedQty;
             sellOrder.quantity -= executedQty;

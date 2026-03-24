@@ -2,7 +2,6 @@
 #include "bot.hpp"
 #include <cstdlib>
 #include "../src/orderbook.hpp"
-#include "bot.hpp"
 
 class RandomBot : public Bot {
 public:

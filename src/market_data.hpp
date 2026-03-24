@@ -10,7 +10,7 @@ struct MarketTick {
 class MarketData {
 public:
     std::vector<MarketTick> ticks;
-    int index = 0;
+    size_t index = 0;   // Fix #5: size_t matches ticks.size() type — no signed/unsigned mismatch
 
     bool loadCSV(const std::string& filename);
     MarketTick next();
