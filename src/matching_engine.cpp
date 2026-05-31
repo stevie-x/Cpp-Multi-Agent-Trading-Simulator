@@ -1,68 +1,69 @@
 #include "matching_engine.hpp"
 #include <algorithm>
+#include <iostream>
 
-static Bot* findBot(std::vector<std::unique_ptr<Bot>> &bots, const std::string &name) {
-    for (auto &b : bots)
+static Bot* findBot(std::vector<std::unique_ptr<Bot>>& bots, const std::string& name) {
+    for (auto& b : bots)
         if (b->name == name) return b.get();
     return nullptr;
 }
 
-void matchOrders(LimitOrderBook &lob,
-                 std::vector<std::unique_ptr<Bot>> &bots,
-                 std::string &tradeBuffer,
+void matchOrders(LimitOrderBook& lob,
+                 std::vector<std::unique_ptr<Bot>>& bots,
+                 std::string& tradeBuffer,
                  int timestep) {
 
     while (!lob.bids.empty() && !lob.asks.empty()) {
-        auto bestBidIt = lob.bids.begin();
-        auto bestAskIt = lob.asks.begin();
+        auto bidIt = lob.bids.begin();
+        auto askIt = lob.asks.begin();
 
-        while (!bestBidIt->second.empty() &&
-               bestBidIt->second.front().quantity == 0)
-            bestBidIt->second.pop_front();
-        if (bestBidIt->second.empty()) { lob.bids.erase(bestBidIt); continue; }
+        while (!bidIt->second.empty() &&
+               bidIt->second.front().quantity == 0)
+            bidIt->second.pop_front();
+        if (bidIt->second.empty()) { lob.bids.erase(bidIt); continue; }
 
-        while (!bestAskIt->second.empty() &&
-               bestAskIt->second.front().quantity == 0)
-            bestAskIt->second.pop_front();
-        if (bestAskIt->second.empty()) { lob.asks.erase(bestAskIt); continue; }
+        while (!askIt->second.empty() &&
+               askIt->second.front().quantity == 0)
+            askIt->second.pop_front();
+        if (askIt->second.empty()) { lob.asks.erase(askIt); continue; }
 
-        if (bestBidIt->first >= bestAskIt->first) {
-            Order &buyOrder  = bestBidIt->second.front();
-            Order &sellOrder = bestAskIt->second.front();
+        if (bidIt->first >= askIt->first) {
+            Order& buy  = bidIt->second.front();
+            Order& sell = askIt->second.front();
 
-            int    executedQty = std::min(buyOrder.quantity, sellOrder.quantity);
-            double tradePrice  = sellOrder.price;
+            int    qty   = std::min(buy.quantity, sell.quantity);
+            double price = sell.price;
 
-            std::cout << "Trade executed: " << executedQty
-                      << " ETH at " << tradePrice
-                      << " between " << buyOrder.agent
-                      << " and "    << sellOrder.agent << '\n';
+            std::cout << "Trade executed: " << qty
+                      << " ETH at " << price
+                      << " between " << buy.agent
+                      << " and "    << sell.agent << '\n';
 
-            tradeBuffer += std::to_string(timestep)    + ','
-                         + buyOrder.agent              + ','
-                         + sellOrder.agent             + ','
-                         + std::to_string(tradePrice)  + ','
-                         + std::to_string(executedQty) + '\n';
+            tradeBuffer += std::to_string(timestep) + ','
+                         + buy.agent  + ','
+                         + sell.agent + ','
+                         + std::to_string(price) + ','
+                         + std::to_string(qty)   + '\n';
 
-            if (Bot *buyer  = findBot(bots, buyOrder.agent))
-                buyer->recordTrade(tradePrice, executedQty, true);
-            if (Bot *seller = findBot(bots, sellOrder.agent))
-                seller->recordTrade(tradePrice, executedQty, false);
+            if (Bot* buyer  = findBot(bots, buy.agent))
+                buyer->recordTrade(price, qty, true);
+            if (Bot* seller = findBot(bots, sell.agent))
+                seller->recordTrade(price, qty, false);
 
-            buyOrder.quantity  -= executedQty;
-            sellOrder.quantity -= executedQty;
+            buy.quantity  -= qty;
+            sell.quantity -= qty;
 
-            if (buyOrder.quantity == 0) {
-                lob.orderIndex.erase(buyOrder.id);
-                bestBidIt->second.pop_front();
+            if (buy.quantity  == 0) {
+                lob.orderIndex.erase(buy.id);
+                bidIt->second.pop_front();
             }
-            if (sellOrder.quantity == 0) {
-                lob.orderIndex.erase(sellOrder.id);
-                bestAskIt->second.pop_front();
+            if (sell.quantity == 0) {
+                lob.orderIndex.erase(sell.id);
+                askIt->second.pop_front();
             }
 
-            if (bestBidIt->second.empty()) lob.bids.erase(bestBidIt);
-            if (bestAskIt->second.empty()) lob.asks.erase(bestAskIt);
+            if (bidIt->second.empty()) lob.bids.erase(bidIt);
+            if (askIt->second.empty()) lob.asks.erase(askIt);
         } else {
             break;
         }

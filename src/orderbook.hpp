@@ -1,35 +1,34 @@
 #pragma once
-#include <iostream>
 #include <map>
-#include <list>
 #include <string>
 #include <unordered_map>
 #include "order.hpp"
+#include "ring_buffer.hpp"
+
+// LimitOrderBook — RingBuffer<Order, 64> replaces std::list<Order>
+//
+// BEFORE: std::list — heap node per order, cache-unfriendly
+// AFTER:  RingBuffer — 64 slots inline in the map value, contiguous memory,
+//         zero heap allocation per order, cache-friendly iteration
 
 class LimitOrderBook {
 public:
-    // std::list guarantees pointer/iterator stability after insertions —
-    // unlike std::queue (backed by std::deque), which can reallocate and
-    // invalidate every pointer stored in orderIndex. Using std::list
-    // eliminates the dangling-pointer bug entirely.
+    static constexpr size_t LEVEL_CAPACITY = 64;
+    using OrderQueue = RingBuffer<Order, LEVEL_CAPACITY>;
 
-    // sorted highest price first (best bid on top)
-    std::map<double, std::list<Order>, std::greater<double>> bids;
-
-    // sorted lowest price first (best ask on top)
-    std::map<double, std::list<Order>> asks;
-
-    // Maps orderID → pointer to Order, allows O(1) cancel by ID
-    // Safe now: std::list nodes never move in memory after insertion.
+    std::map<double, OrderQueue, std::greater<double>> bids;
+    std::map<double, OrderQueue> asks;
     std::unordered_map<int, Order*> orderIndex;
 
     void addOrder(const Order& order) {
         if (order.side == Side::BUY) {
-            bids[order.price].push_back(order);
-            orderIndex[order.id] = &bids[order.price].back();
+            auto& q = bids[order.price];
+            q.push_back(order);
+            orderIndex[order.id] = q.back_ptr();
         } else {
-            asks[order.price].push_back(order);
-            orderIndex[order.id] = &asks[order.price].back();
+            auto& q = asks[order.price];
+            q.push_back(order);
+            orderIndex[order.id] = q.back_ptr();
         }
     }
 
