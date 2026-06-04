@@ -7,6 +7,7 @@
 #include <numeric>
 #include <cmath>
 #include <chrono>
+#include <thread>
 
 #include "orderbook.hpp"
 #include "matching_engine.hpp"
@@ -188,14 +189,11 @@ int main() {
     std::cout <<   "╚══════════════════════════════════════════════════════════════════════════════╝\n";
 
     // ── Live Binance WebSocket feed ───────────────────────────────────────────
-    std::cout << "\nRun live simulation? (y/n): ";
-    char choice;
-    std::cin >> choice;
-    if (choice == 'y' || choice == 'Y') {
-        auto liveBots = makeBots();
-        LiveSim live(liveBots, 0);  // 0 = run until Ctrl+C
-        live.run();
-    }
+    std::cout << "\n━━━ Starting live sim in 3 seconds — Ctrl+C to skip or stop ━━━\n";
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+    auto liveBots = makeBots();
+    LiveSim live(liveBots, 0);
+    live.run();
 
     return 0;
 }

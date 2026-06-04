@@ -7,9 +7,6 @@
 #include "../src/flat_orderbook.hpp"
 #include "../src/rdtsc.hpp"
 
-// Bollinger Band mean-reversion with maker/taker spread decision.
-// Strong signal (>2.5σ): cross the spread (taker). Moderate (1.5–2.5σ): post at mid (maker).
-
 class BollingerBot : public Bot {
     int    window_;
     double k_;
@@ -45,12 +42,12 @@ private:
         double deviation = std::abs(price - b.mid) / (b.sigma + 1e-9);
 
         if (price < b.lower) {
-            double limit = (deviation > 2.5) ? price + 0.01 : b.mid - 0.5;
+            double limit = (deviation > 2.5) ? price + 0.01 : price - 0.05;
             auto ord = Order::makeLimitOrder(name, limit, 1, Side::BUY);
             ord.tsc_created = rdtsc();
             lob.addOrder(ord);
         } else if (price > b.upper) {
-            double limit = (deviation > 2.5) ? price - 0.01 : b.mid + 0.5;
+            double limit = (deviation > 2.5) ? price - 0.01 : price + 0.05;
             auto ord = Order::makeLimitOrder(name, limit, 1, Side::SELL);
             ord.tsc_created = rdtsc();
             lob.addOrder(ord);

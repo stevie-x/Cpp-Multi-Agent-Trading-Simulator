@@ -16,7 +16,8 @@ struct FeedState {
     MarketTick current;
     bool isTrade = false;
     bool isDepth = false;
-    std::atomic<bool>* running = nullptr;
+    std::atomic<bool>* running  = nullptr;
+    MarketTick*        shared   = nullptr; // depth writes here → trade reads it
 };
 
 static int feedCallback(struct lws* wsi, enum lws_callback_reasons reason,
@@ -48,8 +49,11 @@ static int feedCallback(struct lws* wsi, enum lws_callback_reasons reason,
                         bidVol += std::stod(level[1].get<std::string>());
                     for (auto& level : j["asks"])
                         askVol += std::stod(level[1].get<std::string>());
-                    state->current.bidVol = bidVol;
-                    state->current.askVol = askVol;
+                    // Write into shared trade tick so imbalance is live
+                    if (state->shared) {
+                        state->shared->bidVol = bidVol;
+                        state->shared->askVol = askVol;
+                    }
                 }
 
             } catch (const std::exception& e) {
@@ -94,6 +98,8 @@ public:
 private:
     std::atomic<bool> running_;
     std::thread feedThread_;
+    FeedState tradeState_;
+    FeedState depthState_;
 
     void run() {
         struct lws_context_creation_info ctxInfo = {};
@@ -110,6 +116,7 @@ private:
 
         depthState_.isDepth = true;
         depthState_.onTick  = nullptr;
+        depthState_.shared  = &tradeState_.current; // depth writes into trade tick
 
         connectStream(ctx, "stream.binance.com", 9443,
                       "/ws/ethusdt@trade", &tradeState_);
@@ -142,9 +149,6 @@ private:
         struct lws* wsi = lws_client_connect_via_info(&info);
         if (!wsi) std::cerr << "[WS] Failed to connect: " << path << "\n";
     }
-
-    FeedState tradeState_;
-    FeedState depthState_;
 
     static constexpr struct lws_protocols protocols_[] = {
         { "binance-feed", feedCallback, 0, 4096, 0, nullptr, 0 },

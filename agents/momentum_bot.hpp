@@ -7,8 +7,6 @@
 #include "../src/rdtsc.hpp"
 #include "regime_detector.hpp"
 
-// Only trades in TRENDING regime — avoids bleeding in choppy markets.
-
 class MomentumBot : public Bot {
     std::deque<double> prices_;
     int window_;
@@ -44,11 +42,11 @@ private:
         if (!regime_.isTrending() && regime_.currentRegime != Regime::UNDEFINED) return;
 
         if (halfAvg(true) > halfAvg(false)) {
-            auto ord = Order::makeLimitOrder(name, price - 1.0, 1, Side::BUY);
+            auto ord = Order::makeLimitOrder(name, price - 0.05, 1, Side::BUY);
             ord.tsc_created = rdtsc();
             lob.addOrder(ord);
         } else if (halfAvg(true) < halfAvg(false)) {
-            auto ord = Order::makeLimitOrder(name, price + 1.0, 1, Side::SELL);
+            auto ord = Order::makeLimitOrder(name, price + 0.05, 1, Side::SELL);
             ord.tsc_created = rdtsc();
             lob.addOrder(ord);
         }

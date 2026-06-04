@@ -6,9 +6,6 @@
 #include "../src/rdtsc.hpp"
 #include "regime_detector.hpp"
 
-// Order book imbalance signal with adverse selection detection.
-// Backs off automatically when >60% of fills are followed by adverse price moves.
-
 class ImbalanceBot : public Bot {
     double threshold_;
     RegimeDetector regime_;
@@ -52,12 +49,12 @@ private:
         if (toxicityScore() > TOXICITY_LIMIT) return;
 
         if (imbalance > threshold_) {
-            auto ord = Order::makeLimitOrder(name, price - 0.50, 1, Side::BUY);
+            auto ord = Order::makeLimitOrder(name, price - 0.05, 1, Side::BUY);
             ord.tsc_created = rdtsc();
             lob.addOrder(ord);
             lastFillPrice_ = price; lastWasBuy_ = true; fillCount_++;
         } else if (imbalance < -threshold_) {
-            auto ord = Order::makeLimitOrder(name, price + 0.50, 1, Side::SELL);
+            auto ord = Order::makeLimitOrder(name, price + 0.05, 1, Side::SELL);
             ord.tsc_created = rdtsc();
             lob.addOrder(ord);
             lastFillPrice_ = price; lastWasBuy_ = false; fillCount_++;

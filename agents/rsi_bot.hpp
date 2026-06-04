@@ -6,8 +6,6 @@
 #include "../src/rdtsc.hpp"
 #include "regime_detector.hpp"
 
-// Only trades in MEAN_REVERT regime — avoids trending bleed.
-
 class RSIBot : public Bot {
     int    period_;
     double oversold_, overbought_;
@@ -45,11 +43,11 @@ private:
 
         double rsi = computeRSI();
         if (rsi < oversold_) {
-            auto ord = Order::makeLimitOrder(name, price - 1.0, 1, Side::BUY);
+            auto ord = Order::makeLimitOrder(name, price - 0.05, 1, Side::BUY);
             ord.tsc_created = rdtsc();
             lob.addOrder(ord);
         } else if (rsi > overbought_) {
-            auto ord = Order::makeLimitOrder(name, price + 1.0, 1, Side::SELL);
+            auto ord = Order::makeLimitOrder(name, price + 0.05, 1, Side::SELL);
             ord.tsc_created = rdtsc();
             lob.addOrder(ord);
         }
