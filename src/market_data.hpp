@@ -7,8 +7,16 @@
 // Represents one data point (basically, one row of market data)
 // Later, use high-low for Volatility, open-close for Momentum, volume for liquidity
 struct MarketTick {
-    long long timestamp;
-    double price;  // close price
+    double price     = 0.0;
+    double qty       = 0.0;
+    double bidVol    = 0.0;
+    double askVol    = 0.0;
+    long long timestamp = 0;
+
+    double imbalance() const {
+        double total = bidVol + askVol;
+        return total == 0.0 ? 0.0 : (bidVol - askVol) / total;
+    }
 };
 
 // This class acts like a data stream simulator:

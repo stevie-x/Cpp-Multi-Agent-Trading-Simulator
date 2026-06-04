@@ -23,6 +23,7 @@
 #include "../agents/rsi_bot.hpp"
 #include "../agents/bollinger_bot.hpp"
 #include "../agents/imbalance_bot.hpp"
+#include "live_sim.hpp"
 
 static std::vector<std::unique_ptr<Bot>> makeBots() {
     std::vector<std::unique_ptr<Bot>> bots;
@@ -178,21 +179,23 @@ int main() {
     std::cout << "  Tx costs  → maker 10bps, taker 10bps, impact 5bps*sqrt(qty/vol)\n";
 
     std::cout << "\n━━━ MULTITHREADED PIPELINE ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
-    {
-        auto bots = makeBots();
-        ThreadedSim sim("ETH", "data/eth_1m.csv", bots, LIMIT);
-        long long mtUs = sim.run();
-        std::cout << "  ETH threaded: ticks=" << sim.ticksProcessed()
-                  << "  orders=" << sim.ordersPlaced()
-                  << "  trades=" << sim.tradesExecuted()
-                  << "  time=" << mtUs << " µs\n";
-    }
+    std::cout << "  (skipped — see ThreadedSim for lock-free SPSC queue implementation)\n";
 
     std::cout << "\n╔══════════════════════════════════════════════════════════════════════════════╗\n";
     std::cout <<   "║  rdtsc calibrated  │  object pool (zero malloc)  │  FIX 4.2 parser        ║\n";
     std::cout <<   "║  alignas(64) Order │  queue-pos fill sim         │  transaction costs      ║\n";
     std::cout <<   "║  O3 march=native   │  regime-gated strategies    │  adverse selection det. ║\n";
     std::cout <<   "╚══════════════════════════════════════════════════════════════════════════════╝\n";
+
+    // ── Live Binance WebSocket feed ───────────────────────────────────────────
+    std::cout << "\nRun live simulation? (y/n): ";
+    char choice;
+    std::cin >> choice;
+    if (choice == 'y' || choice == 'Y') {
+        auto liveBots = makeBots();
+        LiveSim live(liveBots, 0);  // 0 = run until Ctrl+C
+        live.run();
+    }
 
     return 0;
 }
