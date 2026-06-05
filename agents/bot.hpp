@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <cmath>
+#include <iostream>
 
 class LimitOrderBook;
 class FlatOrderBook;
@@ -14,6 +15,11 @@ public:
     double realizedPnl   = 0.0;
     double totalCostPaid = 0.0;
 
+    // Risk limits
+    int    maxPosition    = 20;
+    double maxDrawdownLmt = 5000.0;
+    bool   halted         = false;
+
     struct TradeRecord { double pnl; double price; int qty; bool wasBuyer; };
     std::vector<TradeRecord> tradeHistory;
 
@@ -22,6 +28,21 @@ public:
 
     virtual void onPriceUpdate(double price, LimitOrderBook& lob, int timestep) = 0;
     virtual void onPriceUpdate(double price, FlatOrderBook&  lob, int timestep) = 0;
+
+    bool riskCheck(double currentPrice) {
+        if (halted) return false;
+        if (std::abs(position) >= maxPosition) return false;
+        double currentPnl = pnl(currentPrice);
+        if (currentPnl < peakPnl_ - maxDrawdownLmt) {
+            halted = true;
+            std::cout << "  [RISK] " << name
+                      << " halted — drawdown limit hit ($"
+                      << std::fixed << (peakPnl_ - currentPnl) << ")\n";
+            return false;
+        }
+        if (currentPnl > peakPnl_) peakPnl_ = currentPnl;
+        return true;
+    }
 
     void recordTrade(double price, int qty, bool buyer) {
         double tradePnl = 0.0;
@@ -74,4 +95,5 @@ public:
 
 private:
     double avgCostBasis_ = 0.0;
+    double peakPnl_      = 0.0;
 };

@@ -35,6 +35,7 @@ private:
 
     template<typename Book>
     void place(double price, Book& lob) {
+        if (!riskCheck(price)) return;
         regime_.update(price);
         prices_.push_back(price);
         if ((int)prices_.size() > period_ + 1) prices_.pop_front();

@@ -18,6 +18,7 @@ public:
 private:
     template<typename Book>
     void place(double price, Book& lob) {
+        if (!riskCheck(price)) return;
         int r = dist_(rng_);
         if (r < 3) {
             auto ord = Order::makeLimitOrder(name, price - 0.10, 1, Side::BUY);

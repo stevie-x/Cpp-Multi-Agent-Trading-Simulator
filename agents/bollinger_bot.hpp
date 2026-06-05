@@ -34,6 +34,7 @@ private:
 
     template<typename Book>
     void place(double price, Book& lob) {
+        if (!riskCheck(price)) return;
         prices_.push_back(price);
         if ((int)prices_.size() > window_) prices_.pop_front();
         if ((int)prices_.size() < window_) return;

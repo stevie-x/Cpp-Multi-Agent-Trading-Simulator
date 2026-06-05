@@ -46,6 +46,7 @@ private:
 
     template<typename Book>
     void trade(double price, double imbalance, Book& lob) {
+        if (!riskCheck(price)) return;
         if (toxicityScore() > TOXICITY_LIMIT) return;
 
         if (imbalance > threshold_) {
