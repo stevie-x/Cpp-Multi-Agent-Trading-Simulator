@@ -1,67 +1,68 @@
 #include "flat_matching_engine.hpp"
 #include <algorithm>
-#include <iostream>
 
-static Bot* findBot(std::vector<std::unique_ptr<Bot>> &bots, const std::string &name) {
-    for (auto &b : bots)
-        if (b->name == name) return b.get();
-    return nullptr;
-}
+// matchOrdersFlat — hot path, zero I/O.
+//
+// FIX 1: findBot() removed. botIndex passed in from caller — O(1) lookup.
+// FIX 2: std::cout removed. Trade lines appended to tradeBuffer string only.
+//
+// Both fixes mirror matching_engine.cpp exactly — keep them in sync.
 
-void matchOrdersFlat(FlatOrderBook &lob,
-                     std::vector<std::unique_ptr<Bot>> &bots,
-                     std::string &tradeBuffer,
+void matchOrdersFlat(FlatOrderBook& lob,
+                     std::vector<std::unique_ptr<Bot>>& bots,
+                     std::unordered_map<std::string, Bot*>& botIndex,
+                     std::string& tradeBuffer,
                      int timestep) {
 
     while (!lob.bidsEmpty() && !lob.asksEmpty()) {
-        PriceLevel &bidLevel = lob.bestBid();
-        PriceLevel &askLevel = lob.bestAsk();
+        PriceLevel& bidLevel = lob.bestBid();
+        PriceLevel& askLevel = lob.bestAsk();
 
-        while (!bidLevel.orders.empty() && bidLevel.orders.front().quantity == 0)
+        // Skip cancelled orders (lazy deletion)
+        while (!bidLevel.orders.empty() &&
+               bidLevel.orders.front().quantity == 0)
             bidLevel.orders.pop_front();
         if (bidLevel.orders.empty()) { lob.removeBestBid(); continue; }
 
-        while (!askLevel.orders.empty() && askLevel.orders.front().quantity == 0)
+        while (!askLevel.orders.empty() &&
+               askLevel.orders.front().quantity == 0)
             askLevel.orders.pop_front();
         if (askLevel.orders.empty()) { lob.removeBestAsk(); continue; }
 
         if (bidLevel.price >= askLevel.price) {
-            Order &buyOrder  = bidLevel.orders.front();
-            Order &sellOrder = askLevel.orders.front();
+            Order& buy  = bidLevel.orders.front();
+            Order& sell = askLevel.orders.front();
 
-            int    executedQty = std::min(buyOrder.quantity, sellOrder.quantity);
-            double tradePrice  = sellOrder.price;
+            int    qty   = std::min(buy.quantity, sell.quantity);
+            double price = sell.price;
 
-            std::cout << "Trade executed: " << executedQty
-                      << " ETH at " << tradePrice
-                      << " between " << buyOrder.agent
-                      << " and "    << sellOrder.agent << '\n';
+            // No stdout — append to buffer only
+            tradeBuffer += std::to_string(timestep)  + ','
+                         + buy.agent                 + ','
+                         + sell.agent                + ','
+                         + std::to_string(price)     + ','
+                         + std::to_string(qty)       + '\n';
 
-            tradeBuffer += std::to_string(timestep)    + ','
-                         + buyOrder.agent              + ','
-                         + sellOrder.agent             + ','
-                         + std::to_string(tradePrice)  + ','
-                         + std::to_string(executedQty) + '\n';
+            // O(1) bot lookup — no linear scan
+            auto buyIt  = botIndex.find(buy.agent);
+            auto sellIt = botIndex.find(sell.agent);
+            if (buyIt  != botIndex.end()) buyIt->second->recordTrade(price, qty, true);
+            if (sellIt != botIndex.end()) sellIt->second->recordTrade(price, qty, false);
 
-            if (Bot *buyer  = findBot(bots, buyOrder.agent))
-                buyer->recordTrade(tradePrice, executedQty, true);
-            if (Bot *seller = findBot(bots, sellOrder.agent))
-                seller->recordTrade(tradePrice, executedQty, false);
+            buy.quantity  -= qty;
+            sell.quantity -= qty;
 
-            buyOrder.quantity  -= executedQty;
-            sellOrder.quantity -= executedQty;
-
-            if (buyOrder.quantity == 0) {
-                lob.orderIndex.erase(buyOrder.id);
+            if (buy.quantity == 0) {
+                lob.orderIndex.erase(buy.id);
                 bidLevel.orders.pop_front();
             }
-            if (sellOrder.quantity == 0) {
-                lob.orderIndex.erase(sellOrder.id);
+            if (sell.quantity == 0) {
+                lob.orderIndex.erase(sell.id);
                 askLevel.orders.pop_front();
             }
 
-            if (bidLevel.orders.empty()) lob.removeBestBid();
-            if (askLevel.orders.empty()) lob.removeBestAsk();
+            if (bidLevel.orders.empty())  lob.removeBestBid();
+            if (askLevel.orders.empty())  lob.removeBestAsk();
         } else {
             break;
         }
