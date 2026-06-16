@@ -17,6 +17,7 @@
 #include "../agents/random_bot.hpp"
 #include "../agents/momentum_bot.hpp"
 #include "../agents/rsi_bot.hpp"
+#include "spread_tracker.hpp"
 
 using Clock = std::chrono::high_resolution_clock;
 using ns    = std::chrono::nanoseconds;
@@ -115,6 +116,9 @@ static long long runSingleThreaded(const std::string& name,
     std::vector<long long> tickLatencies;
     tickLatencies.reserve(limit);
 
+    // FIX 20: track bid-ask spread across the run
+    SpreadTracker spreadTracker;
+
     auto wallStart = Clock::now();
 
     while (data.hasNext() && timestep < limit) {
@@ -136,6 +140,9 @@ static long long runSingleThreaded(const std::string& name,
         if (!tradeLines.empty())
             tradeLogger.log(tradeLines);
 
+        // Record spread after each match — captures post-trade book state
+        spreadTracker.record(lob);
+
         tickLatencies.push_back(
             std::chrono::duration_cast<ns>(Clock::now() - tickStart).count());
     }
@@ -154,6 +161,7 @@ static long long runSingleThreaded(const std::string& name,
               << (timestep / (us / 1e6)) << " ticks/sec\n";
 
     printHistogram(tickLatencies, name + " single-threaded");
+    spreadTracker.print(name);
 
     return us;
 }
